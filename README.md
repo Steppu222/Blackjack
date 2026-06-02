@@ -1,1 +1,2 @@
-iamgaben
+This is Blackjack, in C
+
