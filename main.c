@@ -3,74 +3,105 @@
 #include <time.h>
 #include <stdbool.h>
 
-int deck[52] = {2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,1,1,1,1};
+typedef struct{
+    int value;
+    int display;
+}Card;
+
+Card deck[52] = {
+                {2, 2},{2, 2},{2, 2},{2, 2},
+                {3, 3},{3, 3},{3, 3},{3, 3},
+                {4, 4},{4, 4},{4, 4},{4, 4},
+                {5, 5},{5, 5},{5, 5},{5, 5},
+                {6, 6},{6, 6},{6, 6},{6, 6},
+                {7, 7},{7, 7},{7, 7},{7, 7},
+                {8, 8},{8, 8},{8, 8},{8, 8},
+                {9, 9},{9, 9},{9, 9},{9, 9},
+                {10, 10},{10, 10},{10, 10},{10, 10},
+                {10, 11},{10, 11},{10, 11},{10, 11}, // Display code for jack
+                {10, 12},{10, 12},{10, 12},{10, 12}, // Display code for queen
+                {10, 13},{10, 13},{10, 13},{10, 13}, // Display code for king
+                {1, 14},{1, 14},{1, 14},{1, 14} // Display code for ace
+            };
 int randIter = 0;
+int cardDrawIterator = 0;
 bool game = true;
 int userChoice = 0;
-int playerHand[5] = {};
-int dealerHand[5] = {};
-int inc = 1;
+Card playerHand[5] = {};
+Card dealerHand[5] = {};
+int deckPositionIterator = 1;
 bool lastChance = false;
 
-int moveToBack(int *list, int index, int length) {
-    int last = length - 1;
-    int temp = list[index];
-    list[index] = list[last];
-    list[last] = temp;
+
+void swap(Card *list, int index1, int index2) {
+    Card temp = list[index1];
+    list[index1] = list[index2];
+    list[index2] = temp;
 }
 
-int sum(int *list, int length) {
+int sum(Card *list, int length) {
     int total = 0;
     for(int i = 0; i < length; i++) {
-       total += list[i];
+       total += list[i].value;
     }
     return total;
 }
 
-int getTopCard(int *deck, int size, int hand) { //function to return a drawn card without the use of a dynamic array
-    int handTot;
-    int topcard;
-    
-    if(hand == 0) {
-        handTot = sum(playerHand, 5);
+void shuffle(Card *deck, int length) {
+    for(int i = length - 1; i > 0; i--) {
+        int swappedCardIndex = rand() % (i + 1);
+        swap(deck, i, swappedCardIndex);
     }
-    else {
-        handTot = sum(dealerHand, 5);
-    }
-    int topcardI;
-    topcardI = rand() % (size - randIter);
-    
-    if(deck[topcardI] == 1) {
-        int acechoice = 0;
-        if(hand == 0) {
-            printf("You drew an ace\nWould you like it to be a 1 or an 11?: ");
-            scanf("%d", &acechoice);
-            moveToBack(deck, topcardI, size - randIter);
-            randIter++;
-            return acechoice;
-        }
-        else {
-            if(sum(dealerHand, 5) + 11 > 21) {
-                acechoice = 1;
-            }
-            else {
-                acechoice = 11;
-            }
-            moveToBack(deck, topcardI, size - randIter);
-            randIter++;
-            return acechoice;
-        }
-    }
-    moveToBack(deck, topcardI, size - randIter);
-
-    topcard = deck[size - randIter - 1];
-    randIter++;
-    return topcard;
 }
 
+Card getTopCard(Card *deck, int size, int hand) { //function to return a drawn card without the use of a dynamic array
+    Card cardDrawn = deck[cardDrawIterator];
+    int aceChoice;
+    if(cardDrawn.display == 14) {
+        if(hand == 0) {
+            printf("You have drawn an ace, would you like it to be a 1 or 11?: ");
+            scanf("%d", &aceChoice);
+        }
+        else if(sum(dealerHand, 5) > 10) {
+            aceChoice = 1;
+        }
+        else {
+            aceChoice = 11;
+        }
+    cardDrawn.value = aceChoice;
+    }
+    cardDrawIterator++;
+    return cardDrawn;
+}
 
+const char* displayCard(Card card) {
+    switch(card.display) {
+        case 2:  return "2";
+        case 3:  return "3";
+        case 4:  return "4";
+        case 5:  return "5";
+        case 6:  return "6";
+        case 7:  return "7";
+        case 8:  return "8";
+        case 9:  return "9";
+        case 10: return "10";
+        case 11: return "Jack";
+        case 12: return "Queen";
+        case 13: return "King";
+        case 14: return "Ace";
+    }
+}
 
-int turnType(int situ) { //determines what to do based on the user input  
+void outCards(Card *hand) {
+    for(int i = 0; i < 5; i++) {
+        if(playerHand[i].display == 0) {
+            continue;
+        }
+        printf("%s, ", displayCard(playerHand[i]));
+    }
+}
+
+void turnType(int situ) { //determines what to do based on the user input  
     switch(situ) {
         case 0: //begining of the game
             printf("\nDealer draws two cards\n");
@@ -84,20 +115,20 @@ int turnType(int situ) { //determines what to do based on the user input
             
             printf("Your cards:\n");
             for(int i = 0; i < 5; i++) {
-                printf("%d, ", playerHand[i]);
-                if(playerHand[i] == 0) {
+                if(playerHand[i].value == 0) {
                     continue;
                 }
-            }    
+                printf("%s, ", displayCard(playerHand[i]));
+            }
             printf("\n");
             
             printf("Dealers cards:\n");
             printf("?, ");
             for(int i = 1; i < 5; i++) {
-                printf("%d, ", dealerHand[i]);
-                if(dealerHand[i] == 0) {
+                if(dealerHand[i].value == 0) {
                     continue;
                 }
+                printf("%s, ", displayCard(dealerHand[i]));
             }
             printf("\n");
             printf("Your total is now %d\n", sum(playerHand, 5));
@@ -108,20 +139,20 @@ int turnType(int situ) { //determines what to do based on the user input
             break;
             
         case 1: //player decides to hit
-            if(playerHand[4] != 0) {
+            if(playerHand[4].display != 0) {
                 printf("You cannot draw any more cards\n");
                 break;
             }
 
-            playerHand[inc] = getTopCard(deck, 52, 0);
-            printf("\nYou drew a card\nIt is a %d\n", playerHand[inc]);
+            playerHand[deckPositionIterator] = getTopCard(deck, 52, 0);
+            printf("\nYou drew a card\nIt is a %s\n", displayCard(playerHand[deckPositionIterator]));
             printf("Your cards:\n");
             for(int i = 0; i < 5; i++) {
-                printf("%d, ", playerHand[i]);
-                if(playerHand[i] == 0) {
+                if(playerHand[i].value == 0) {
                     continue;
                 }
-            }    
+                printf("%s, ", displayCard(playerHand[i]));
+            }
             printf("\nYour total is now %d\n", sum(playerHand, 5));
             
             if(sum(playerHand, 5) > 21) {
@@ -138,15 +169,15 @@ int turnType(int situ) { //determines what to do based on the user input
             printf("Dealers cards:\n");
             printf("?, ");
             for(int i = 1; i < 5; i++) {
-                printf("%d, ", dealerHand[i]);
-                if(dealerHand[i] == 0) {
+                if(dealerHand[i].value == 0) {
                     continue;
                 }
+                printf("%s, ", displayCard(dealerHand[i]));
             }
             printf("\n");
 
             
-            if(playerHand[4] != 0) {
+            if(playerHand[4].value != 0) {
                 printf("You cannot draw any more cards\n");
                 break;
             }
@@ -156,28 +187,28 @@ int turnType(int situ) { //determines what to do based on the user input
             break;
 
         case 2: //player decides to stand    
-            printf("\nThe dealer flips his first card: It is a %d\n", dealerHand[0]);
+            printf("\nThe dealer flips his first card: It is a %s\n", displayCard(dealerHand[0]));
             printf("Your cards:\n");
             for(int i = 0; i < 5; i++) {
-                printf("%d, ", playerHand[i]);
-                if(playerHand[i] == 0) {
+                if(playerHand[i].value == 0) {
                     continue;
                 }
-            }    
+                printf("%s, ", displayCard(playerHand[i]));
+            }
             printf("\n");
             
             printf("Dealers cards:\n");
             for(int i = 0; i < 5; i++) {
-                printf("%d, ", dealerHand[i]);
-                if(dealerHand[i] == 0) {
+                if(dealerHand[i].value == 0) {
                     continue;
                 }
+                printf("%s, ", displayCard(dealerHand[i]));
             }
             printf("\n");
-            int incLoop = inc;
-            while(sum(dealerHand, 5) < 17 && dealerHand[4] == 0) {
+            int incLoop = deckPositionIterator;
+            while(sum(dealerHand, 5) < 17 && dealerHand[4].value == 0) {
                 dealerHand[incLoop] = getTopCard(deck, 52, 1);
-                printf("The dealer draws a card\nIt is a %d\n", dealerHand[incLoop]);
+                printf("The dealer draws a card\nIt is a %s\n", displayCard(dealerHand[incLoop]));
                 incLoop++;
             }
             printf("Their total is now %d\n", sum(dealerHand, 5));
@@ -206,11 +237,12 @@ int turnType(int situ) { //determines what to do based on the user input
 
 int main(void) {
     srand(time(NULL));
+    shuffle(deck, 52);
     
     int choice = 0;
     turnType(0);
     while(game) {
-        inc++;
+        deckPositionIterator++;
         if(lastChance) {
             turnType(2);
             break;
