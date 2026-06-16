@@ -23,14 +23,14 @@ Card deck[52] = {
                 {10, 13},{10, 13},{10, 13},{10, 13}, // Display code for king
                 {1, 14},{1, 14},{1, 14},{1, 14} // Display code for ace
             };
-int cardDrawIterator = 0; //iterator for the drawing of cards in getTopCard()
+int randIter = 0;
+int cardDrawIterator = 0;
 bool game = true;
 int userChoice = 0;
 Card playerHand[5] = {};
 Card dealerHand[5] = {};
-int P_handPositionIterator = 1; // iterators for the position cards are put into in the hand for: Player
-int D_handPositionIterator = 1; //                                                                Dealer
-bool lastChance = false; // true if the player earns 21, and the dealer ai gets a chance to tie
+int deckPositionIterator = 1;
+bool lastChance = false;
 
 
 void swap(Card *list, int index1, int index2) {
@@ -53,7 +53,8 @@ void shuffle(Card *deck, int length) {
         swap(deck, i, swappedCardIndex);
     }
 }
-int size, int hand) { //function to return a drawn card without the use of a dynamic array
+
+Card getTopCard(Card *deck, int size, int hand) { //function to return a drawn card without the use of a dynamic array
     Card cardDrawn = deck[cardDrawIterator];
     int aceChoice;
     if(cardDrawn.display == 14) {
@@ -143,8 +144,8 @@ void turnType(int situ) { //determines what to do based on the user input
                 break;
             }
 
-            playerHand[P_handPositionIterator] = getTopCard(deck, 52, 0);
-            printf("\nYou drew a card\nIt is a %s\n", displayCard(playerHand[P_handPositionIterator]));
+            playerHand[deckPositionIterator] = getTopCard(deck, 52, 0);
+            printf("\nYou drew a card\nIt is a %s\n", displayCard(playerHand[deckPositionIterator]));
             printf("Your cards:\n");
             for(int i = 0; i < 5; i++) {
                 if(playerHand[i].value == 0) {
@@ -204,10 +205,11 @@ void turnType(int situ) { //determines what to do based on the user input
                 printf("%s, ", displayCard(dealerHand[i]));
             }
             printf("\n");
+            int incLoop = deckPositionIterator;
             while(sum(dealerHand, 5) < 17 && dealerHand[4].value == 0) {
-                dealerHand[D_handPositionIterator] = getTopCard(deck, 52, 1);
-                printf("The dealer draws a card\nIt is a %s\n", displayCard(dealerHand[D_handPositionIterator]));
-                D_handPositionIterator++;
+                dealerHand[incLoop] = getTopCard(deck, 52, 1);
+                printf("The dealer draws a card\nIt is a %s\n", displayCard(dealerHand[incLoop]));
+                incLoop++;
             }
             printf("Their total is now %d\n", sum(dealerHand, 5));
             if(sum(dealerHand, 5) > 21) {
@@ -240,7 +242,7 @@ int main(void) {
     int choice = 0;
     turnType(0);
     while(game) {
-        P_handPositionIterator++;
+        deckPositionIterator++;
         if(lastChance) {
             turnType(2);
             break;
